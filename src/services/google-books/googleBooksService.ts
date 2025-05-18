@@ -4,6 +4,7 @@ import { logger } from '@/lib/logger'
 import { AppError } from '@/lib/error'
 import { GoogleBook, googleBookSchema } from '@/types'
 import { LANGUAGE_SEARCH_TERMS } from '@/config/languages'
+import { redisService } from '@/services/redis/redisService'
 
 export class GoogleBooksService {
   private readonly baseUrl = 'https://www.googleapis.com/books/v1'
@@ -17,7 +18,7 @@ export class GoogleBooksService {
     this.apiKey = apiKey
   }
 
-  private formatQuery(query: string, language: string): string {
+  private formatQuery(query: string, language: string = 'en'): string {
     // Remove special characters and extra spaces
     const cleanQuery = query.trim().replace(/[^\w\s]/g, '')
     
@@ -30,6 +31,15 @@ export class GoogleBooksService {
 
   async searchBooks(query: string, maxResults: number = 40, language: string = 'en'): Promise<GoogleBook[]> {
     try {
+      const cacheKey = redisService.generateSearchKey(query, language)
+      
+      // Try to get from cache first
+      const cachedBooks = await redisService.get<GoogleBook[]>(cacheKey)
+      if (cachedBooks) {
+        logger.debug({ cacheKey }, 'Cache hit for book search')
+        return cachedBooks
+      }
+
       const formattedQuery = this.formatQuery(query, language)
       const url = new URL(`${this.baseUrl}/volumes`)
       url.searchParams.append('q', formattedQuery)
@@ -75,6 +85,10 @@ export class GoogleBooksService {
           return bookLanguage === language
         })
 
+      // Cache the results
+      await redisService.set(cacheKey, filteredBooks)
+      logger.debug({ cacheKey }, 'Cached book search results')
+
       return filteredBooks
     } catch (error) {
       if (error instanceof AppError) {
@@ -92,6 +106,15 @@ export class GoogleBooksService {
 
   async getBookById(id: string): Promise<GoogleBook> {
     try {
+      const cacheKey = redisService.generateBookKey(id)
+      
+      // Try to get from cache first
+      const cachedBook = await redisService.get<GoogleBook>(cacheKey)
+      if (cachedBook) {
+        logger.debug({ cacheKey }, 'Cache hit for book details')
+        return cachedBook
+      }
+
       const url = new URL(`${this.baseUrl}/volumes/${id}`)
       url.searchParams.append('key', this.apiKey)
 
@@ -119,7 +142,13 @@ export class GoogleBooksService {
       }
 
       const data = await response.json()
-      return googleBookSchema.parse(data)
+      const book = googleBookSchema.parse(data)
+
+      // Cache the result
+      await redisService.set(cacheKey, book)
+      logger.debug({ cacheKey }, 'Cached book details')
+
+      return book
     } catch (error) {
       if (error instanceof AppError) {
         throw error
