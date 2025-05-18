@@ -1,15 +1,13 @@
 "use client"
 import { useState, useEffect } from 'react'
-import { GoogleBook } from '@/types'
 import { BookCard } from './BookCard'
 import { LANGUAGES, getBrowserLanguage } from '@/config/languages'
+import { useBooks } from '@/hooks/useBooks'
 
 export function BookSearch() {
   const [query, setQuery] = useState('')
   const [language, setLanguage] = useState('en')
-  const [books, setBooks] = useState<GoogleBook[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const { useSearchBooks, useBestsellers } = useBooks()
 
   // Set initial language based on browser settings
   useEffect(() => {
@@ -17,83 +15,17 @@ export function BookSearch() {
     setLanguage(browserLang)
   }, [])
 
-  // Load bestsellers when component mounts or language changes
-  useEffect(() => {
-    const loadBestsellers = async () => {
-      setLoading(true)
-      setError(null)
+  // Query for bestsellers
+  const bestsellersQuery = useBestsellers(language)
 
-      try {
-        const currentYear = new Date().getFullYear()
-        const response = await fetch(
-          `/api/books/search?q=subject:bestseller ${currentYear}&lang=${language}`
-        )
-        const data = await response.json()
+  // Query for search results
+  const searchQuery = useSearchBooks(query, language)
 
-        if (!response.ok) {
-          throw new Error(data.error || 'Failed to load bestsellers')
-        }
-
-        setBooks(data.books)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load bestsellers')
-        setBooks([])
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    loadBestsellers()
-  }, [language])
+  // Use the appropriate query based on whether there's a search query
+  const { data: books, isLoading, error } = query.trim() ? searchQuery : bestsellersQuery
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!query.trim()) {
-      // If search is cleared, load bestsellers again
-      const currentYear = new Date().getFullYear()
-      setLoading(true)
-      setError(null)
-
-      try {
-        const response = await fetch(
-          `/api/books/search?q=subject:bestseller ${currentYear}&lang=${language}`
-        )
-        const data = await response.json()
-
-        if (!response.ok) {
-          throw new Error(data.error || 'Failed to load bestsellers')
-        }
-
-        setBooks(data.books)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load bestsellers')
-        setBooks([])
-      } finally {
-        setLoading(false)
-      }
-      return
-    }
-
-    setLoading(true)
-    setError(null)
-
-    try {
-      const response = await fetch(
-        `/api/books/search?q=${encodeURIComponent(query)}&lang=${language}`
-      )
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to search books')
-      }
-
-      setBooks(data.books)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to search books')
-      setBooks([])
-    } finally {
-      setLoading(false)
-    }
   }
 
   return (
@@ -122,30 +54,30 @@ export function BookSearch() {
           </div>
           <button
             type="submit"
-            disabled={loading}
+            disabled={isLoading}
             className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 whitespace-nowrap"
           >
-            {loading ? 'Searching...' : 'Search'}
+            {isLoading ? 'Searching...' : 'Search'}
           </button>
         </div>
       </form>
 
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
-          {error}
+          {error instanceof Error ? error.message : 'An error occurred'}
         </div>
       )}
 
-      {loading ? (
+      {isLoading ? (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {books.map((book) => (
+          {books?.map((book) => (
             <BookCard key={book.id} book={book} />
           ))}
-          {books.length === 0 && !error && query && (
+          {books?.length === 0 && !error && query && (
             <div className="col-span-full text-center text-gray-500 py-8">
               No books found. Try a different search term.
             </div>
