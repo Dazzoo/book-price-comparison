@@ -13,6 +13,10 @@ const nextConfig: NextConfig = {
     }
     return config;
   },
+  images: {
+    domains: ['books.google.com'],
+
+  },
 };
 
 export default nextConfig;
