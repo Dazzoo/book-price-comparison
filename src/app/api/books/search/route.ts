@@ -7,6 +7,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
     const query = searchParams.get('q')
     const maxResults = searchParams.get('maxResults')
+    const language = searchParams.get('lang') || 'en'
 
     if (!query) {
       return NextResponse.json(
@@ -18,7 +19,8 @@ export async function GET(request: NextRequest) {
     const service = new GoogleBooksService()
     const books = await service.searchBooks(
       query,
-      maxResults ? parseInt(maxResults, 10) : undefined
+      maxResults ? parseInt(maxResults, 10) : undefined,
+      language
     )
 
     return NextResponse.json({ books })
