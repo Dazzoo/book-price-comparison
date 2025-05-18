@@ -17,9 +17,62 @@ export function BookSearch() {
     setLanguage(browserLang)
   }, [])
 
+  // Load bestsellers when component mounts or language changes
+  useEffect(() => {
+    const loadBestsellers = async () => {
+      setLoading(true)
+      setError(null)
+
+      try {
+        const currentYear = new Date().getFullYear()
+        const response = await fetch(
+          `/api/books/search?q=subject:bestseller ${currentYear}&lang=${language}`
+        )
+        const data = await response.json()
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to load bestsellers')
+        }
+
+        setBooks(data.books)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load bestsellers')
+        setBooks([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadBestsellers()
+  }, [language])
+
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!query.trim()) return
+    if (!query.trim()) {
+      // If search is cleared, load bestsellers again
+      const currentYear = new Date().getFullYear()
+      setLoading(true)
+      setError(null)
+
+      try {
+        const response = await fetch(
+          `/api/books/search?q=subject:bestseller ${currentYear}&lang=${language}`
+        )
+        const data = await response.json()
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to load bestsellers')
+        }
+
+        setBooks(data.books)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load bestsellers')
+        setBooks([])
+      } finally {
+        setLoading(false)
+      }
+      return
+    }
 
     setLoading(true)
     setError(null)
