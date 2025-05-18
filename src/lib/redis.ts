@@ -1,11 +1,27 @@
 // lib/redis.ts
-import { Redis } from '@upstash/redis'
+import { createClient, RedisClientType } from 'redis'
 import { env } from './env/env'
+import { logger } from './logger'
 
-export const redis = new Redis({
-  url: env.UPSTASH_REDIS_REST_URL,
-  token: env.UPSTASH_REDIS_REST_TOKEN,
+const redisClient: RedisClientType = createClient({
+  username: env.REDIS_USERNAME,
+  password: env.REDIS_PASSWORD,
+  socket: {
+    host: env.REDIS_HOST,
+    port: parseInt(env.REDIS_PORT || '6379')
+  }
 })
+
+redisClient.on('error', (err: Error) => {
+  logger.error({ error: err }, 'Redis Client Error')
+})
+
+redisClient.on('connect', () => {
+  logger.info('Redis Client Connected')
+})
+
+// Connect to Redis
+redisClient.connect().catch(console.error)
 
 // Cache keys
 export const CACHE_KEYS = {
@@ -20,3 +36,5 @@ export const CACHE_TTL = {
   prices: 60 * 15, // 15 minutes
   search: 60 * 30, // 30 minutes
 } as const
+
+export default redisClient 

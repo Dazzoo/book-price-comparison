@@ -1,12 +1,38 @@
 // lib/logger.ts
 import { pino } from 'pino'
 
-export const logger = pino({
-  level: process.env.LOG_LEVEL || 'info',
-  transport: {
-    target: 'pino-pretty',
-  },
-})
+// Create a browser-safe logger
+const createLogger = () => {
+  if (typeof window === 'undefined') {
+    // Server-side logger
+    return pino({
+      level: process.env.LOG_LEVEL || 'info',
+      browser: {
+        write: {
+          info: (...args) => console.log(...args),
+          error: (...args) => console.error(...args),
+          warn: (...args) => console.warn(...args),
+          debug: (...args) => console.debug(...args),
+        },
+      },
+    })
+  }
+  
+  // Client-side logger
+  return pino({
+    level: process.env.LOG_LEVEL || 'info',
+    browser: {
+      write: {
+        info: (...args) => console.log(...args),
+        error: (...args) => console.error(...args),
+        warn: (...args) => console.warn(...args),
+        debug: (...args) => console.debug(...args),
+      },
+    },
+  })
+}
+
+export const logger = createLogger()
 
 // Logging middleware
 export const logMiddleware = async (req: Request, next: () => Promise<Response>) => {
@@ -29,7 +55,7 @@ export const logMiddleware = async (req: Request, next: () => Promise<Response>)
     logger.error({
       method: req.method,
       url: req.url,
-      error,
+      error: error instanceof Error ? error.message : String(error),
       duration,
     }, 'Request failed')
     

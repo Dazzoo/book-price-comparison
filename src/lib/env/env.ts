@@ -1,5 +1,9 @@
 // lib/env.ts
 import { z } from 'zod'
+import * as dotenv from 'dotenv'
+
+// Load environment variables from .env file
+dotenv.config()
 
 // Define the schema
 const envSchema = z.object({
@@ -8,14 +12,19 @@ const envSchema = z.object({
     message: "DATABASE_URL is required and must be a valid URL",
   }),
   
-  // Redis
-  UPSTASH_REDIS_REST_URL: z.string().url({
-    message: "UPSTASH_REDIS_REST_URL is required and must be a valid URL",
+  // Redis Cloud
+  REDIS_PASSWORD: z.string().min(1, {
+    message: "REDIS_PASSWORD is required",
   }),
-  UPSTASH_REDIS_REST_TOKEN: z.string().min(1, {
-    message: "UPSTASH_REDIS_REST_TOKEN is required",
+  REDIS_USERNAME: z.string().min(1, {
+    message: "REDIS_USERNAME is required",
   }),
-  
+  REDIS_HOST: z.string().min(1, {
+    message: "REDIS_HOST is required",
+  }),
+  REDIS_PORT: z.string().min(1, {
+    message: "REDIS_PORT is required",
+  }),
   // API Keys
   GOOGLE_BOOKS_API_KEY: z.string().min(1, {
     message: "GOOGLE_BOOKS_API_KEY is required",
@@ -24,8 +33,8 @@ const envSchema = z.object({
   // App
   NODE_ENV: z.enum(['development', 'production', 'test'], {
     errorMap: () => ({ message: "NODE_ENV must be development, production, or test" }),
-  }),
-  LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).optional(),
+  }).default('development'),
+  LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
 })
 
 // Create a function to validate environment variables
