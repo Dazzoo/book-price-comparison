@@ -36,7 +36,7 @@ export class BooksService {
    * Get a specific book by ID
    * @param id Book ID
    * @returns Promise with book details
-   */
+   */ 
   static async getById(id: string): Promise<GoogleBook> {
     const response = await fetch(`${BASE_URL}/${id}`)
     const data = await response.json()

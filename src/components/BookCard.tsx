@@ -6,66 +6,68 @@ interface BookCardProps {
 }
 
 export function BookCard({ book }: BookCardProps) {
-  const thumbnail = book.volumeInfo.imageLinks?.thumbnail
-  const title = book.volumeInfo.title
-  const authors = book.volumeInfo.authors?.join(', ') || 'Unknown Author'
-  const description = book.volumeInfo.description || 'No description available'
-  const publishedDate = book.volumeInfo.publishedDate || 'Unknown date'
-
-  console.log('thumbnail', thumbnail)
+  const {
+    title,
+    authors,
+    imageLinks,
+    publishedDate,
+    description,
+    averageRating,
+    ratingsCount,
+  } = book.volumeInfo
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
-      <div className="relative h-48 w-full bg-gray-100 flex items-center justify-center">
-        {thumbnail ? (
-          <Image
-            src={thumbnail}
-            alt={title}
-            fill
-            className="object-contain"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          />
-        ) : (
-          <div className="flex flex-col items-center justify-center text-gray-400">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-16 w-16"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-              />
-            </svg>
-            <span className="mt-2 text-sm">No cover available</span>
-          </div>
-        )}
+      <div className="relative h-48 w-full">
+        <Image
+          src={imageLinks?.thumbnail || '/placeholder-book.png'}
+          alt={title}
+          fill
+          className="object-cover"
+        />
       </div>
       <div className="p-4">
-        <h3 className="text-lg font-semibold text-gray-900 line-clamp-2">{title}</h3>
-        <p className="text-sm text-gray-600 mt-1">{authors}</p>
-        <p className="text-xs text-gray-500 mt-1">Published: {publishedDate}</p>
-        <p className="text-sm text-gray-700 mt-2 line-clamp-3">{description}</p>
-        <div className="mt-4 flex justify-between items-center">
-          <a
-            href={book.volumeInfo.infoLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-          >
-            View Details
-          </a>
-          <button
-            onClick={() => {/* TODO: Add to comparison list */}}
-            className="bg-blue-600 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-700 transition-colors"
-          >
-            Compare
-          </button>
-        </div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
+          {title}
+        </h3>
+        {authors && (
+          <p className="text-sm text-gray-600 mb-2">
+            By {authors.join(', ')}
+          </p>
+        )}
+        {publishedDate && (
+          <p className="text-sm text-gray-500 mb-2">
+            Published: {new Date(publishedDate).getFullYear()}
+          </p>
+        )}
+        {averageRating && (
+          <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center">
+              {[...Array(5)].map((_, i) => (
+                <svg
+                  key={i}
+                  className={`w-4 h-4 ${
+                    i < Math.round(averageRating)
+                      ? 'text-yellow-400'
+                      : 'text-gray-300'
+                  }`}
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+              ))}
+            </div>
+            {ratingsCount && (
+              <span className="text-sm text-gray-500">
+                ({ratingsCount.toLocaleString()} ratings)
+              </span>
+            )}
+          </div>
+        )}
+        {description && (
+          <p className="text-sm text-gray-600 line-clamp-3">{description}</p>
+        )}
       </div>
     </div>
   )
