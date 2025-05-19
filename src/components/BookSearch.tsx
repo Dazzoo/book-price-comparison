@@ -1,19 +1,37 @@
 "use client"
 import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { BookCard } from './BookCard'
 import { LANGUAGES, getBrowserLanguage } from '@/config/languages'
 import { useBooks } from '@/hooks/useBooks'
 
 export function BookSearch() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const [query, setQuery] = useState('')
-  const [language, setLanguage] = useState('en')
+  const [language, setLanguage] = useState(searchParams.get('lang') || 'en')
   const { useSearchBooks, useBestsellers } = useBooks()
 
-  // Set initial language based on browser settings
+  // Set initial language based on browser settings if no language in URL
   useEffect(() => {
-    const browserLang = getBrowserLanguage()
-    setLanguage(browserLang)
+    if (!searchParams.get('lang')) {
+      const browserLang = getBrowserLanguage()
+      setLanguage(browserLang)
+      updateLanguageInUrl(browserLang)
+    }
   }, [])
+
+  const updateLanguageInUrl = (newLang: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('lang', newLang)
+    router.push(`?${params.toString()}`)
+  }
+
+  const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newLang = e.target.value
+    setLanguage(newLang)
+    updateLanguageInUrl(newLang)
+  }
 
   // Query for bestsellers
   const bestsellersQuery = useBestsellers(language)
@@ -38,12 +56,12 @@ export function BookSearch() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search for books..."
-              className="flex-1 rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
             />
             <select
               value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-              className="rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              onChange={handleLanguageChange}
+              className="rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-black"
             >
               {LANGUAGES.map((lang) => (
                 <option key={lang.code} value={lang.code}>
