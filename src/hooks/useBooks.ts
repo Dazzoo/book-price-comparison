@@ -1,25 +1,17 @@
 import { useQuery } from '@tanstack/react-query'
 import { BooksService } from '@/web-services/books/booksService'
+import { CategoryId } from '@/config/categories'
 
 export function useBooks() {
   /**
-   * Hook for searching books
+   * Hook for searching books with optional category filter
    */
-  const useSearchBooks = (query: string, language: string) => {
+  const useSearchBooks = (query: string, language: string, category?: CategoryId) => {
     return useQuery({
-      queryKey: ['books', 'search', query, language],
-      queryFn: () => BooksService.search(query, language),
-      enabled: !!query.trim(),
-    })
-  }
-
-  /**
-   * Hook for getting bestsellers
-   */
-  const useBestsellers = (language: string) => {
-    return useQuery({
-      queryKey: ['books', 'bestsellers', language],
-      queryFn: () => BooksService.getBestsellers(language),
+      queryKey: ['books', 'search', query, language, category],
+      queryFn: () => BooksService.search(query, language, category),
+      // Always enabled to fetch initial books
+      enabled: true,
     })
   }
 
@@ -36,7 +28,6 @@ export function useBooks() {
 
   return {
     useSearchBooks,
-    useBestsellers,
     useBook,
   }
 } 

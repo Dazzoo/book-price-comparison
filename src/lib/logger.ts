@@ -6,7 +6,7 @@ const createLogger = () => {
   if (typeof window === 'undefined') {
     // Server-side logger
     return pino({
-      level: process.env.LOG_LEVEL || 'info',
+  level: process.env.LOG_LEVEL || 'info',
       browser: {
         write: {
           info: (...args) => console.log(...args),
@@ -28,8 +28,8 @@ const createLogger = () => {
         warn: (...args) => console.warn(...args),
         debug: (...args) => console.debug(...args),
       },
-    },
-  })
+  },
+})
 }
 
 export const logger = createLogger()

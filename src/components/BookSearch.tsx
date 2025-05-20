@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { BookCard } from './BookCard'
 import { LANGUAGES, getBrowserLanguage } from '@/config/languages'
+import { CATEGORIES, CategoryId } from '@/config/categories'
 import { useBooks } from '@/hooks/useBooks'
 
 export function BookSearch() {
@@ -10,37 +11,43 @@ export function BookSearch() {
   const searchParams = useSearchParams()
   const [query, setQuery] = useState('')
   const [language, setLanguage] = useState(searchParams.get('lang') || 'en')
-  const { useSearchBooks, useBestsellers } = useBooks()
+  const [category, setCategory] = useState(searchParams.get('category') || '')
+  const { useSearchBooks } = useBooks()
 
   // Set initial language based on browser settings if no language in URL
   useEffect(() => {
     if (!searchParams.get('lang')) {
       const browserLang = getBrowserLanguage()
       setLanguage(browserLang)
-      updateLanguageInUrl(browserLang)
+      updateUrlParams({ lang: browserLang })
     }
   }, [])
 
-  const updateLanguageInUrl = (newLang: string) => {
+  const updateUrlParams = (updates: { lang?: string; category?: string }) => {
     const params = new URLSearchParams(searchParams.toString())
-    params.set('lang', newLang)
+    if (updates.lang) params.set('lang', updates.lang)
+    if (updates.category) params.set('category', updates.category)
     router.push(`?${params.toString()}`)
   }
 
   const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newLang = e.target.value
     setLanguage(newLang)
-    updateLanguageInUrl(newLang)
+    updateUrlParams({ lang: newLang })
   }
 
-  // Query for bestsellers
-  const bestsellersQuery = useBestsellers(language)
+  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newCategory = e.target.value
+    setCategory(newCategory)
+    updateUrlParams({ category: newCategory })
+  }
 
-  // Query for search results
-  const searchQuery = useSearchBooks(query, language)
-
-  // Use the appropriate query based on whether there's a search query
-  const { data: books, isLoading, error } = query.trim() ? searchQuery : bestsellersQuery
+  // Use a single query for both search and category
+  const { data: books, isLoading, error } = useSearchBooks(
+    query,
+    language,
+    category as CategoryId
+  )
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -66,6 +73,18 @@ export function BookSearch() {
               {LANGUAGES.map((lang) => (
                 <option key={lang.code} value={lang.code}>
                   {lang.name}
+                </option>
+              ))}
+            </select>
+            <select
+              value={category}
+              onChange={handleCategoryChange}
+              className="rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-black"
+            >
+              <option value="">All Categories</option>
+              {CATEGORIES.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
                 </option>
               ))}
             </select>
@@ -95,9 +114,9 @@ export function BookSearch() {
           {books?.map((book) => (
             <BookCard key={book.id} book={book} />
           ))}
-          {books?.length === 0 && !error && query && (
+          {books?.length === 0 && !error && (
             <div className="col-span-full text-center text-gray-500 py-8">
-              No books found. Try a different search term.
+              No books found. Try a different search term or category.
             </div>
           )}
         </div>
