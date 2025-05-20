@@ -7,18 +7,17 @@ export class BooksService {
   /**
    * Search for books using the Google Books API
    * @param query Search query
-   * @param language Language code
    * @param category Optional category to filter by
    * @returns Promise with array of books
    */
-  static async search(query: string, language: string, category?: CategoryId): Promise<GoogleBook[]> {
+  static async search(query: string, category?: CategoryId): Promise<GoogleBook[]> {
     // If no query or category, fetch popular books
     const searchQuery = query.trim() || category
       ? `${category ? category + ' ' : ''}${query}`
-      : 'popular books'
+      : 'subject:fiction'
 
     const response = await fetch(
-      `${BASE_URL}/search?q=${encodeURIComponent(searchQuery)}&lang=${language}`
+      `${BASE_URL}/search?q=${encodeURIComponent(searchQuery)}&maxResults=40`
     )
     const data = await response.json()
 

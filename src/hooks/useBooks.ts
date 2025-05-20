@@ -6,10 +6,10 @@ export function useBooks() {
   /**
    * Hook for searching books with optional category filter
    */
-  const useSearchBooks = (query: string, language: string, category?: CategoryId) => {
+  const useSearchBooks = (query: string, category?: CategoryId) => {
     return useQuery({
-      queryKey: ['books', 'search', query, language, category],
-      queryFn: () => BooksService.search(query, language, category),
+      queryKey: ['books', 'search', query, category],
+      queryFn: () => BooksService.search(query, category),
       // Always enabled to fetch initial books
       enabled: true,
     })

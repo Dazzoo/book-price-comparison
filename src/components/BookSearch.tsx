@@ -1,8 +1,7 @@
 "use client"
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { BookCard } from './BookCard'
-import { LANGUAGES, getBrowserLanguage } from '@/config/languages'
 import { CATEGORIES, CategoryId } from '@/config/categories'
 import { useBooks } from '@/hooks/useBooks'
 
@@ -10,22 +9,11 @@ export function BookSearch() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [query, setQuery] = useState('')
-  const [language, setLanguage] = useState(searchParams.get('lang') || 'en')
   const [category, setCategory] = useState(searchParams.get('category') || '')
   const { useSearchBooks } = useBooks()
 
-  // Set initial language based on browser settings if no language in URL
-  useEffect(() => {
-    if (!searchParams.get('lang')) {
-      const browserLang = getBrowserLanguage()
-      setLanguage(browserLang)
-      updateUrlParams({ lang: browserLang })
-    }
-  }, [])
-
-  const updateUrlParams = (updates: { lang?: string; category?: string }) => {
+  const updateUrlParams = (updates: { category?: string }) => {
     const params = new URLSearchParams(searchParams.toString())
-    if (updates.lang) params.set('lang', updates.lang)
     if (updates.category !== undefined) {
       if (updates.category) {
         params.set('category', updates.category)
@@ -34,12 +22,6 @@ export function BookSearch() {
       }
     }
     router.push(`?${params.toString()}`)
-  }
-
-  const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newLang = e.target.value
-    setLanguage(newLang)
-    updateUrlParams({ lang: newLang })
   }
 
   const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -51,7 +33,6 @@ export function BookSearch() {
   // Use a single query for both search and category
   const { data: books, isLoading, error } = useSearchBooks(
     query,
-    language,
     category as CategoryId
   )
 
@@ -71,17 +52,6 @@ export function BookSearch() {
               placeholder="Search for books..."
               className="flex-1 rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
             />
-            <select
-              value={language}
-              onChange={handleLanguageChange}
-              className="rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-black"
-            >
-              {LANGUAGES.map((lang) => (
-                <option key={lang.code} value={lang.code}>
-                  {lang.name}
-                </option>
-              ))}
-            </select>
             <select
               value={category}
               onChange={handleCategoryChange}
