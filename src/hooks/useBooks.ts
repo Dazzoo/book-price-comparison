@@ -9,7 +9,7 @@ export function useBooks() {
   const useSearchBooks = (query: string, category?: CategoryId) => {
     return useQuery({
       queryKey: ['books', 'search', query, category],
-      queryFn: () => BooksService.search(query, category),
+      queryFn: () => BooksService.search(query, category || ''),
       // Always enabled to fetch initial books
       enabled: true,
     })

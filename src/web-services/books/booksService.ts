@@ -17,7 +17,7 @@ export class BooksService {
       : 'subject:fiction'
 
     const response = await fetch(
-      `${BASE_URL}/search?q=${encodeURIComponent(searchQuery)}&maxResults=40`
+      `${BASE_URL}/search?q=${encodeURIComponent(searchQuery)}`
     )
     const data = await response.json()
 
@@ -30,14 +30,13 @@ export class BooksService {
 
   /**
    * Get books by category
-   * @param language Language code
    * @param category Category name
    * @returns Promise with array of books
    */
   static async getByCategory(language: string, category?: CategoryId): Promise<GoogleBook[]> {
     // Use the category name directly in the query
     const query = category || ''
-    return this.search(query, language)
+    return this.search(query)
   }
 
   /**
