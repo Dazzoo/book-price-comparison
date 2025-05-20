@@ -26,7 +26,13 @@ export function BookSearch() {
   const updateUrlParams = (updates: { lang?: string; category?: string }) => {
     const params = new URLSearchParams(searchParams.toString())
     if (updates.lang) params.set('lang', updates.lang)
-    if (updates.category) params.set('category', updates.category)
+    if (updates.category !== undefined) {
+      if (updates.category) {
+        params.set('category', updates.category)
+      } else {
+        params.delete('category')
+      }
+    }
     router.push(`?${params.toString()}`)
   }
 
